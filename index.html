@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>RC Wheel Maker - shared wheel</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="icon.png"><link rel="apple-touch-icon" href="icon.png">
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#1d1a16;color:#f3eadb;font:16px system-ui,-apple-system,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#2a251f;border:1px solid #4a4134;border-radius:16px;padding:22px;width:min(94vw,440px);text-align:center}
+img{width:84px;height:84px;border-radius:20px}h1{color:#ffcf4a;font-size:22px;margin:10px 0 4px}
+#what{color:#d8ccb8;margin:4px 0 16px;min-height:1.3em}
+.btn{display:block;width:100%;padding:14px;border-radius:12px;border:0;font-size:17px;font-weight:700;margin-top:10px;text-decoration:none;cursor:pointer}
+.go{background:#ffcf4a;color:#201a10}.grey{background:#3a3329;color:#f3eadb}.off{opacity:.55;pointer-events:none}
+small{display:block;color:#a89a84;margin-top:14px;line-height:1.4}
+</style></head><body>
+<div class="card">
+  <img src="icon.png" alt="">
+  <h1>RC Wheel Maker</h1>
+  <div id="what">Someone shared an RC wheel design with you.</div>
+  <a class="btn go" id="open" href="#">Open in RC Wheel Maker</a>
+  <div id="get">
+    <small>Don't have the app yet? Get it, then come back to this link.</small>
+    <a class="btn grey" id="ios" href="#">App Store (iPhone, iPad)</a>
+    <a class="btn grey" id="android" href="#">Google Play (Android)</a>
+  </div>
+  <small>The wheel travels inside this link itself: nothing is stored on a server.</small>
+</div>
+<script>
+// The design is in the part after # (it never leaves this device). This page only hands it to the app via rcwheelmaker://
+// and shows where to get the app. Store links: fill in when the apps are published.
+var STORE = { ios: '', android: '' };
+var m = /d=([01]\.[A-Za-z0-9_-]+)/.exec(location.hash || location.search || '');
+var d = m ? m[1] : '';
+var app = 'rcwheelmaker://open?d=' + d;
+var isAndroid = /Android/i.test(navigator.userAgent);
+var isApple = /iPhone|iPad|iPod|Macintosh/i.test(navigator.userAgent) && 'ontouchend' in document;
+var openEl = document.getElementById('open');
+if (!d) { document.getElementById('what').textContent = 'This link has no wheel in it. Ask for the link again.'; openEl.classList.add('off'); }
+openEl.href = isAndroid ? 'intent://open?d=' + d + '#Intent;scheme=rcwheelmaker;end' : app;
+function store(id, url, soon) { var a = document.getElementById(id); if (url) a.href = url; else { a.textContent += ' - coming soon'; a.classList.add('off'); } }
+store('ios', STORE.ios); store('android', STORE.android);
+if (isAndroid) document.getElementById('ios').style.display = 'none';
+if (isApple) document.getElementById('android').style.display = 'none';
+// show which wheel it is (unpacked here, on this device)
+(async function () {
+  try {
+    var t = d.slice(2).replace(/-/g, '+').replace(/_/g, '/'); while (t.length % 4) t += '=';
+    var u8 = Uint8Array.from(atob(t), function (c) { return c.charCodeAt(0); });
+    if (d[0] === '1') u8 = new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+    var w = JSON.parse(new TextDecoder().decode(u8)), v = w.values || {};
+    var name = String(w.name || 'Shared wheel').slice(0, 60);
+    document.getElementById('what').textContent = '"' + name + '"' + (v.tire_d ? ' - ' + v.tire_d + ' x ' + v.tire_w + ' mm, ' + (v.tire || '') : '');
+  } catch (e) { /* the app will still open it */ }
+})();
+// try the app once by itself (a tap on the button works too)
+if (d) setTimeout(function () { location.href = openEl.href; }, 400);
+</script>
+</body></html>
