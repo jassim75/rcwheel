@@ -53,6 +53,6 @@ if (isApple) document.getElementById('android').style.display = 'none';
   } catch (e) { /* the app will still open it */ }
 })();
 // try the app once by itself (a tap on the button works too)
-if (d) setTimeout(function () { location.href = openEl.href; }, 400);
+if (d && isAndroid) setTimeout(function () { location.href = openEl.href; }, 400);   // iPhone/iPad: tap the button (Safari warns if the app is missing)
 </script>
 </body></html>
